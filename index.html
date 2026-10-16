@@ -23,7 +23,7 @@
   }
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-    padding: 32px; width: 100%; max-width: 380px;
+    padding: 32px; width: 100%; max-width: 440px;
   }
   h1 { font-size: 1.15rem; margin: 0 0 4px; }
   p.sub { color: var(--muted); margin: 0 0 24px; font-size: 0.9rem; }
@@ -50,6 +50,19 @@
   .row .v { font-size: 1.25rem; font-weight: 700; }
   .note { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
   .back { margin-top: 20px; background: transparent; color: var(--accent); font-weight: 500; }
+
+  .section-title {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--muted); margin: 24px 0 4px;
+  }
+  .pct-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .pct-row:last-child { border-bottom: none; }
+  .pct-row .k { font-size: 0.88rem; }
+  .pct-row .v { font-size: 0.95rem; font-weight: 600; }
+  .pct-row .v.pos { color: var(--good); }
+  .pct-row .v.neg { color: var(--bad); }
+  .pct-row .v.muted { color: var(--muted); font-weight: 500; }
+  .highlight .v { font-size: 1.1rem; }
 </style>
 </head>
 <body>
@@ -67,14 +80,25 @@
     <div class="result" id="resultView">
       <h1>Vaš rezultat</h1>
       <p class="sub" id="periodLabel"></p>
-      <div class="row">
+      <div class="row highlight">
         <span class="k">Ostvareni bonus</span>
         <span class="v" id="bonusVal">—</span>
       </div>
-      <div class="row">
+      <div class="row highlight">
         <span class="k">Ocjena</span>
         <span class="v" id="qualityVal">—</span>
       </div>
+
+      <div class="section-title">KPI po kategoriji</div>
+      <div id="categoryRows"></div>
+
+      <div class="section-title">Ostali pokazatelji</div>
+      <div class="pct-row"><span class="k">Greške</span><span class="v" id="errorsVal">—</span></div>
+      <div class="pct-row"><span class="k">Vreme</span><span class="v" id="timeVal">—</span></div>
+      <div class="pct-row"><span class="k">Količina</span><span class="v" id="quantityVal">—</span></div>
+      <div class="pct-row"><span class="k">Ukupno</span><span class="v" id="totalVal">—</span></div>
+      <div class="pct-row"><span class="k">Procenat</span><span class="v" id="percentVal">—</span></div>
+
       <button class="back" id="backBtn">Nazad</button>
     </div>
   </div>
@@ -111,6 +135,26 @@
 
   function fmtMoney(n) {
     return n.toLocaleString("sr-Latn-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtPct(n) {
+    return (n * 100).toLocaleString("sr-Latn-RS", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+  }
+
+  // field: {value, note}. Vraca {text, cls} spreman za prikaz.
+  function pctDisplay(field) {
+    if (field && field.value !== null && field.value !== undefined) {
+      var cls = field.value > 0 ? "pos" : (field.value < 0 ? "neg" : "");
+      return { text: fmtPct(field.value), cls: cls };
+    }
+    return { text: (field && field.note) ? field.note : "—", cls: "muted" };
+  }
+
+  function setPctRow(id, field) {
+    var el = document.getElementById(id);
+    var d = pctDisplay(field);
+    el.textContent = d.text;
+    el.className = "v" + (d.cls ? " " + d.cls : "");
   }
 
   async function deriveKey(pin, saltBytes, iterations) {
@@ -191,6 +235,25 @@
         qualityVal.appendChild(n2);
       }
     }
+
+    var catBox = document.getElementById("categoryRows");
+    catBox.innerHTML = "";
+    if (data.categories) {
+      Object.keys(data.categories).forEach(function (label) {
+        var d = pctDisplay(data.categories[label]);
+        var row = document.createElement("div");
+        row.className = "pct-row";
+        row.innerHTML =
+          '<span class="k">' + label + '</span><span class="v' + (d.cls ? " " + d.cls : "") + '">' + d.text + '</span>';
+        catBox.appendChild(row);
+      });
+    }
+
+    setPctRow("errorsVal", data.errors);
+    setPctRow("timeVal", data.time);
+    setPctRow("quantityVal", data.quantity);
+    setPctRow("totalVal", data.total);
+    setPctRow("percentVal", data.percent);
 
     loginView.style.display = "none";
     resultView.style.display = "block";
