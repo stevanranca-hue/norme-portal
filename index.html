@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rezultati obračuna</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f5f7; --card: #ffffff; --text: #1a1d23; --muted: #6b7280;
+    --border: #e2e4e9; --accent: #2563eb; --accent-text: #ffffff;
+    --good: #16a34a; --bad: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15171c; --card: #1e2128; --text: #f1f2f4; --muted: #9ba1ab; --border: #2c3038; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px 16px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; width: 100%; max-width: 380px;
+  }
+  h1 { font-size: 1.15rem; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 24px; font-size: 0.9rem; }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 16px 0 6px; }
+  input {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 1rem; letter-spacing: 0.5px;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    width: 100%; margin-top: 24px; padding: 12px; border-radius: 10px; border: none;
+    background: var(--accent); color: var(--accent-text); font-size: 1rem; font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .error {
+    margin-top: 16px; padding: 10px 12px; border-radius: 8px; background: color-mix(in srgb, var(--bad) 12%, transparent);
+    color: var(--bad); font-size: 0.88rem; display: none;
+  }
+  .result { display: none; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--muted); font-size: 0.9rem; }
+  .row .v { font-size: 1.25rem; font-weight: 700; }
+  .note { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
+  .back { margin-top: 20px; background: transparent; color: var(--accent); font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div id="loginView">
+      <h1>Rezultati obračuna</h1>
+      <p class="sub">Unesite svoj ID i PIN da vidite svoj rezultat.</p>
+      <label for="idInput">ID</label>
+      <input id="idInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="npr. e123456">
+      <label for="pinInput">PIN</label>
+      <input id="pinInput" type="password" autocomplete="off" spellcheck="false" placeholder="PIN kod">
+      <button id="submitBtn">Prikaži rezultat</button>
+      <div class="error" id="errorBox"></div>
+    </div>
+    <div class="result" id="resultView">
+      <h1>Vaš rezultat</h1>
+      <p class="sub" id="periodLabel"></p>
+      <div class="row">
+        <span class="k">Ostvareni bonus</span>
+        <span class="v" id="bonusVal">—</span>
+      </div>
+      <div class="row">
+        <span class="k">Ocjena</span>
+        <span class="v" id="qualityVal">—</span>
+      </div>
+      <button class="back" id="backBtn">Nazad</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var loginView = document.getElementById("loginView");
+  var resultView = document.getElementById("resultView");
+  var errorBox = document.getElementById("errorBox");
+  var submitBtn = document.getElementById("submitBtn");
+  var idInput = document.getElementById("idInput");
+  var pinInput = document.getElementById("pinInput");
+
+  var payloadsPromise = fetch("payloads.json").then(function (r) { return r.json(); });
+
+  function b64ToBytes(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = "block";
+  }
+
+  function clearError() {
+    errorBox.style.display = "none";
+    errorBox.textContent = "";
+  }
+
+  function fmtMoney(n) {
+    return n.toLocaleString("sr-Latn-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function deriveKey(pin, saltBytes, iterations) {
+    var baseKey = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(pin), { name: "PBKDF2" }, false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: saltBytes, iterations: iterations, hash: "SHA-256" },
+      baseKey, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
+    );
+  }
+
+  async function tryLogin() {
+    clearError();
+    var id = idInput.value.trim().toLowerCase();
+    var pin = pinInput.value.trim().toUpperCase();
+    if (!id || !pin) { showError("Unesite ID i PIN."); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Provjera...";
+    try {
+      var payloads = await payloadsPromise;
+      var entry = payloads[id];
+      if (!entry) { showError("ID nije pronađen."); return; }
+
+      var salt = b64ToBytes(entry.salt);
+      var iv = b64ToBytes(entry.iv);
+      var ct = b64ToBytes(entry.ct);
+      var key = await deriveKey(pin, salt, entry.iter);
+
+      var plainBuf;
+      try {
+        plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, ct);
+      } catch (e) {
+        showError("Pogrešan PIN.");
+        return;
+      }
+
+      var data = JSON.parse(new TextDecoder().decode(plainBuf));
+      renderResult(data);
+    } catch (e) {
+      showError("Greška pri učitavanju podataka. Pokušajte ponovo.");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Prikaži rezultat";
+    }
+  }
+
+  function renderResult(data) {
+    document.getElementById("periodLabel").textContent = data.period || "";
+
+    var bonusVal = document.getElementById("bonusVal");
+    bonusVal.innerHTML = "";
+    if (data.bonus !== null && data.bonus !== undefined) {
+      bonusVal.textContent = fmtMoney(data.bonus);
+    } else {
+      bonusVal.textContent = "—";
+      if (data.bonus_note) {
+        var n = document.createElement("div");
+        n.className = "note";
+        n.textContent = data.bonus_note;
+        bonusVal.appendChild(document.createElement("br"));
+        bonusVal.appendChild(n);
+      }
+    }
+
+    var qualityVal = document.getElementById("qualityVal");
+    qualityVal.innerHTML = "";
+    if (data.quality !== null && data.quality !== undefined) {
+      qualityVal.textContent = data.quality.toFixed(2);
+    } else {
+      qualityVal.textContent = "—";
+      if (data.quality_note) {
+        var n2 = document.createElement("div");
+        n2.className = "note";
+        n2.textContent = data.quality_note;
+        qualityVal.appendChild(document.createElement("br"));
+        qualityVal.appendChild(n2);
+      }
+    }
+
+    loginView.style.display = "none";
+    resultView.style.display = "block";
+  }
+
+  submitBtn.addEventListener("click", tryLogin);
+  pinInput.addEventListener("keydown", function (e) { if (e.key === "Enter") tryLogin(); });
+
+  document.getElementById("backBtn").addEventListener("click", function () {
+    resultView.style.display = "none";
+    loginView.style.display = "block";
+    idInput.value = "";
+    pinInput.value = "";
+    clearError();
+  });
+})();
+</script>
+</body>
+</html>
