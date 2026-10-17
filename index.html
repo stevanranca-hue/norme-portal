@@ -96,9 +96,11 @@
   .panel h2 { font-size: 1rem; margin: 0 0 14px; }
 
   table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; font-size: 0.78rem; color: var(--muted); font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  th { text-align: left; font-size: 0.78rem; color: var(--muted); font-weight: 600; padding: 0 12px 8px 0; border-bottom: 1px solid var(--border); }
   th.num, td.num { text-align: right; }
-  td { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  th:last-child, td:last-child { padding-right: 0; }
+  th:first-child, td:first-child { white-space: nowrap; width: 1%; }
   tr:last-child td { border-bottom: none; }
   td.kpi { font-weight: 700; }
   .pos { color: var(--pos); }
