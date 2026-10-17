@@ -3,103 +3,251 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rezultati obračuna</title>
+<title>Moja norma</title>
 <style>
   :root {
     color-scheme: light dark;
-    --bg: #f4f5f7; --card: #ffffff; --text: #1a1d23; --muted: #6b7280;
-    --border: #e2e4e9; --accent: #2563eb; --accent-text: #ffffff;
-    --good: #16a34a; --bad: #dc2626;
+    --bg: #f3f5f9; --panel: #ffffff; --border: #e4e7ee; --text: #10151f; --muted: #68707e;
+    --header-bg: #102a4c; --header-text: #ffffff; --header-sub: #93a4c2;
+    --pos: #1d54c9; --neg: #c2540f; --accent: #2563eb; --accent-text: #ffffff;
+    --modal-overlay: rgba(10, 14, 22, 0.5);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #15171c; --card: #1e2128; --text: #f1f2f4; --muted: #9ba1ab; --border: #2c3038; }
+    :root { --bg: #0f1218; --panel: #171b23; --border: #262b36; --text: #eef1f6; --muted: #9aa3b2; }
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
     font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 24px 16px;
   }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-    padding: 32px; width: 100%; max-width: 440px;
+  .topbar { background: var(--header-bg); color: var(--header-text); }
+  .topbar-inner {
+    max-width: 960px; margin: 0 auto; padding: 16px 20px;
+    display: flex; align-items: baseline; justify-content: space-between;
   }
-  h1 { font-size: 1.15rem; margin: 0 0 4px; }
-  p.sub { color: var(--muted); margin: 0 0 24px; font-size: 0.9rem; }
-  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 16px 0 6px; }
-  input {
+  .brand-name { font-weight: 800; letter-spacing: 0.03em; font-size: 1.05rem; }
+  .brand-sub { margin-left: 10px; color: var(--header-sub); font-size: 0.95rem; }
+  .topbar-link {
+    background: transparent; border: none; color: var(--header-text); font-weight: 600;
+    font-size: 0.88rem; cursor: pointer; padding: 6px 10px; border-radius: 6px;
+  }
+  .topbar-link:hover { background: rgba(255,255,255,0.1); }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+
+  /* ---- prijava ---- */
+  .login-wrap { display: flex; justify-content: center; padding: 40px 0; }
+  .login-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; width: 100%; max-width: 380px;
+  }
+  .login-card h1 { font-size: 1.15rem; margin: 0 0 4px; }
+  .login-card p.sub { color: var(--muted); margin: 0 0 24px; font-size: 0.9rem; }
+  .login-card label { display: block; font-size: 0.85rem; color: var(--muted); margin: 16px 0 6px; }
+  .login-card input {
     width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
     background: var(--bg); color: var(--text); font-size: 1rem; letter-spacing: 0.5px;
   }
-  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button {
+  .login-card input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .login-card button {
     width: 100%; margin-top: 24px; padding: 12px; border-radius: 10px; border: none;
     background: var(--accent); color: var(--accent-text); font-size: 1rem; font-weight: 600;
     cursor: pointer;
   }
-  button:disabled { opacity: 0.6; cursor: default; }
+  .login-card button:disabled { opacity: 0.6; cursor: default; }
   .error {
-    margin-top: 16px; padding: 10px 12px; border-radius: 8px; background: color-mix(in srgb, var(--bad) 12%, transparent);
-    color: var(--bad); font-size: 0.88rem; display: none;
+    margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+    background: color-mix(in srgb, var(--neg) 14%, transparent);
+    color: var(--neg); font-size: 0.88rem; display: none;
   }
-  .result { display: none; }
-  .row { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--border); }
-  .row:last-child { border-bottom: none; }
-  .row .k { color: var(--muted); font-size: 0.9rem; }
-  .row .v { font-size: 1.25rem; font-weight: 700; }
-  .note { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
-  .back { margin-top: 20px; background: transparent; color: var(--accent); font-weight: 500; }
 
-  .section-title {
-    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--muted); margin: 24px 0 4px;
+  /* ---- rezultat ---- */
+  .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .result-head h1 { margin: 0 0 4px; font-size: 1.4rem; }
+  .result-head .sub { color: var(--muted); font-size: 0.92rem; }
+  .ghost-btn {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 14px; border-radius: 9px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    white-space: nowrap;
   }
-  .pct-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .pct-row:last-child { border-bottom: none; }
-  .pct-row .k { font-size: 0.88rem; }
-  .pct-row .v { font-size: 0.95rem; font-weight: 600; }
-  .pct-row .v.pos { color: var(--good); }
-  .pct-row .v.neg { color: var(--bad); }
-  .pct-row .v.muted { color: var(--muted); font-weight: 500; }
-  .highlight .v { font-size: 1.1rem; }
+  .ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+  .stats-row.four { grid-template-columns: repeat(4, 1fr); margin-top: 18px; margin-bottom: 0; }
+  @media (max-width: 640px) {
+    .stats-row, .stats-row.four { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px;
+  }
+  .stat-card .k { color: var(--muted); font-size: 0.85rem; margin-bottom: 6px; }
+  .stat-card .v { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+  .stat-card .s { color: var(--muted); font-size: 0.78rem; margin-top: 6px; }
+  .stat-card .v.neg { color: var(--neg); }
+  .stat-card .v.pos { color: var(--pos); }
+
+  .panels { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+  @media (max-width: 720px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px;
+  }
+  .panel h2 { font-size: 1rem; margin: 0 0 14px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 0.78rem; color: var(--muted); font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  th.num, td.num { text-align: right; }
+  td { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  tr:last-child td { border-bottom: none; }
+  td.kpi { font-weight: 700; }
+  .pos { color: var(--pos); }
+  .neg { color: var(--neg); }
+  .muted { color: var(--muted); font-weight: 500; }
+
+  .other-list .pct-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem;
+  }
+  .other-list .pct-row:last-child { border-bottom: none; }
+  .other-list .v { font-weight: 700; }
+
+  .note-bar {
+    margin-top: 14px; padding: 14px 18px; border-radius: 12px;
+    background: color-mix(in srgb, var(--neg) 10%, var(--panel));
+    border: 1px solid color-mix(in srgb, var(--neg) 30%, var(--border));
+    color: var(--text); font-size: 0.9rem;
+  }
+  .note-bar b { color: var(--neg); }
+
+  .back-link { margin-top: 20px; }
+  .back-link button {
+    background: transparent; border: none; color: var(--accent); font-weight: 600; cursor: pointer;
+    font-size: 0.9rem; padding: 0;
+  }
+
+  /* ---- modal ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: var(--modal-overlay);
+    display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10;
+  }
+  .modal {
+    background: var(--panel); border-radius: 14px; max-width: 480px; width: 100%;
+    padding: 24px; border: 1px solid var(--border);
+  }
+  .modal h3 { margin: 0 0 12px; }
+  .modal p { font-size: 0.92rem; color: var(--text); line-height: 1.5; margin: 0 0 10px; }
+  .modal button { margin-top: 10px; }
+
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-  <div class="card">
-    <div id="loginView">
-      <h1>Rezultati obračuna</h1>
-      <p class="sub">Unesite svoj ID i PIN da vidite svoj rezultat.</p>
-      <label for="idInput">ID</label>
-      <input id="idInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="npr. e123456">
-      <label for="pinInput">PIN</label>
-      <input id="pinInput" type="password" autocomplete="off" spellcheck="false" placeholder="PIN kod">
-      <button id="submitBtn">Prikaži rezultat</button>
-      <div class="error" id="errorBox"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div><span class="brand-name">WHITE ROOK</span><span class="brand-sub">Moja norma</span></div>
+      <button class="topbar-link" id="logoutBtn" hidden>Odjava</button>
     </div>
-    <div class="result" id="resultView">
-      <h1>Vaš rezultat</h1>
-      <p class="sub" id="periodLabel"></p>
-      <div class="row highlight">
-        <span class="k">Ostvareni bonus</span>
-        <span class="v" id="bonusVal">—</span>
+  </header>
+
+  <main class="wrap">
+    <div class="login-wrap" id="loginView">
+      <div class="login-card">
+        <h1>Rezultati obračuna</h1>
+        <p class="sub">Unesite svoj ID i PIN da vidite svoj rezultat.</p>
+        <label for="idInput">ID</label>
+        <input id="idInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="npr. e123456">
+        <label for="pinInput">PIN</label>
+        <input id="pinInput" type="password" autocomplete="off" spellcheck="false" placeholder="PIN kod">
+        <button id="submitBtn">Prikaži rezultat</button>
+        <div class="error" id="errorBox"></div>
       </div>
-      <div class="row highlight">
-        <span class="k">Ocjena</span>
-        <span class="v" id="qualityVal">—</span>
+    </div>
+
+    <div id="resultView" hidden>
+      <div class="result-head">
+        <div>
+          <h1 id="nameLabel"></h1>
+          <div class="sub"><span id="periodLabel"></span> · Podaci <span id="periodRange"></span></div>
+        </div>
+        <button class="ghost-btn" id="howBtn">Kako se računa</button>
       </div>
 
-      <div class="section-title">KPI po kategoriji</div>
-      <div id="categoryRows"></div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="k">Ukupno</div>
+          <div class="v" id="ukupnoVal">—</div>
+          <div class="s">Zbir KPI doprinosa</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Procenat</div>
+          <div class="v" id="procenatVal">—</div>
+          <div class="s">Ukupno − dozvoljeni minus</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Ocena</div>
+          <div class="v" id="ocenaVal">—</div>
+          <div class="s" id="ocenaSub">Poseban period ocenjivanja</div>
+        </div>
+      </div>
 
-      <div class="section-title">Ostali pokazatelji</div>
-      <div class="pct-row"><span class="k">Greške</span><span class="v" id="errorsVal">—</span></div>
-      <div class="pct-row"><span class="k">Vreme</span><span class="v" id="timeVal">—</span></div>
-      <div class="pct-row"><span class="k">Količina</span><span class="v" id="quantityVal">—</span></div>
-      <div class="pct-row"><span class="k">Ukupno</span><span class="v" id="totalVal">—</span></div>
-      <div class="pct-row"><span class="k">Procenat</span><span class="v" id="percentVal">—</span></div>
+      <div class="panels">
+        <div class="panel">
+          <h2>Vremena i norme</h2>
+          <table>
+            <thead>
+              <tr><th>Kategorija</th><th class="num">Ostvareno</th><th class="num">Norma</th><th class="num">KPI</th></tr>
+            </thead>
+            <tbody id="standardRows"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>Ostali KPI doprinosi</h2>
+          <div class="other-list" id="otherRows"></div>
+        </div>
+      </div>
 
-      <button class="back" id="backBtn">Nazad</button>
+      <div class="stats-row four">
+        <div class="stat-card">
+          <div class="k">Broj radnih dana</div>
+          <div class="v" id="daysVal">—</div>
+          <div class="s">U obračunskom periodu</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Dozvoljeni minus</div>
+          <div class="v neg" id="allowedVal">—</div>
+          <div class="s">Prema nivoima veština</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Potencijalni bonus</div>
+          <div class="v" id="potentialVal">—</div>
+          <div class="s">Koliki bi bonus bio</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Ostvareni bonus</div>
+          <div class="v" id="achievedVal">—</div>
+          <div class="s">Ko je ostvario</div>
+        </div>
+      </div>
+
+      <div class="note-bar" id="blockedBar" hidden>
+        <b>Bonus:</b> <span id="blockedText"></span>
+      </div>
+
+      <div class="back-link">
+        <button id="backBtn">← Nazad na prijavu</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="howModal" hidden>
+    <div class="modal">
+      <h3>Kako se računa</h3>
+      <p><b>Ukupno</b> je zbir KPI doprinosa iz svih kategorija (Walls, VSE, VSM, VSH, Photoshop PP, 360 kategorije), uz Greške, Vreme i Količinu.</p>
+      <p><b>Procenat</b> = Ukupno − Dozvoljeni minus (koji zavisi od broja veština/nivoa koje imate).</p>
+      <p><b>Potencijalni bonus</b> se računa iz najboljih kategorijskih KPI (dve za tim WP, tri za ostale).</p>
+      <p><b>Ostvareni bonus</b> se isplaćuje samo ako su ispunjeni svi uslovi: minimalni KPI pragovi po kategoriji, pozitivno vreme, i više od 10 radnih dana u periodu.</p>
+      <button class="ghost-btn" id="closeModalBtn">Zatvori</button>
     </div>
   </div>
 
@@ -113,6 +261,7 @@
   var submitBtn = document.getElementById("submitBtn");
   var idInput = document.getElementById("idInput");
   var pinInput = document.getElementById("pinInput");
+  var logoutBtn = document.getElementById("logoutBtn");
 
   var payloadsPromise = fetch("payloads.json").then(function (r) { return r.json(); });
 
@@ -127,7 +276,6 @@
     errorBox.textContent = msg;
     errorBox.style.display = "block";
   }
-
   function clearError() {
     errorBox.style.display = "none";
     errorBox.textContent = "";
@@ -137,24 +285,43 @@
     return n.toLocaleString("sr-Latn-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function fmtPct(n) {
-    return (n * 100).toLocaleString("sr-Latn-RS", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+  function fmtPct(v) {
+    var p = v * 100;
+    var rounded = Math.round(p);
+    if (rounded === 0 && p !== 0) {
+      return p.toLocaleString("sr-Latn-RS", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+    }
+    return rounded.toLocaleString("sr-Latn-RS") + "%";
   }
 
-  // field: {value, note}. Vraca {text, cls} spreman za prikaz.
+  function fmtTime(sec) {
+    sec = Math.round(sec);
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var s = sec % 60;
+    function pad(x) { return (x < 10 ? "0" : "") + x; }
+    return h + ":" + pad(m) + ":" + pad(s);
+  }
+
+  function signClass(v) {
+    if (v > 0) return "pos";
+    if (v < 0) return "neg";
+    return "";
+  }
+
+  // field: {value, note}. Vraca {text, cls}.
   function pctDisplay(field) {
     if (field && field.value !== null && field.value !== undefined) {
-      var cls = field.value > 0 ? "pos" : (field.value < 0 ? "neg" : "");
-      return { text: fmtPct(field.value), cls: cls };
+      return { text: fmtPct(field.value), cls: signClass(field.value) };
     }
     return { text: (field && field.note) ? field.note : "—", cls: "muted" };
   }
 
-  function setPctRow(id, field) {
-    var el = document.getElementById(id);
-    var d = pctDisplay(field);
-    el.textContent = d.text;
-    el.className = "v" + (d.cls ? " " + d.cls : "");
+  function timeDisplay(field) {
+    if (field && field.value !== null && field.value !== undefined) {
+      return fmtTime(field.value);
+    }
+    return "—";
   }
 
   async function deriveKey(pin, saltBytes, iterations) {
@@ -203,72 +370,98 @@
     }
   }
 
+  function setStat(id, field, opts) {
+    opts = opts || {};
+    var el = document.getElementById(id);
+    var d = opts.money
+      ? { text: field && field.value !== null && field.value !== undefined ? fmtMoney(field.value) : (field.note || "—"), cls: "" }
+      : opts.plain
+      ? { text: field && field.value !== null && field.value !== undefined ? field.value : (field && field.note) || "—", cls: "" }
+      : pctDisplay(field);
+    el.textContent = d.text;
+    el.className = "v" + (opts.forceClass ? " " + opts.forceClass : (d.cls ? " " + d.cls : ""));
+  }
+
   function renderResult(data) {
-    document.getElementById("periodLabel").textContent = data.period || "";
+    document.getElementById("nameLabel").textContent = data.name || "";
+    document.getElementById("periodLabel").textContent = data.period_label || "";
+    document.getElementById("periodRange").textContent = data.period_range || "";
 
-    var bonusVal = document.getElementById("bonusVal");
-    bonusVal.innerHTML = "";
-    if (data.bonus !== null && data.bonus !== undefined) {
-      bonusVal.textContent = fmtMoney(data.bonus);
+    setStat("ukupnoVal", data.ukupno);
+    setStat("procenatVal", data.procenat);
+
+    var ocenaEl = document.getElementById("ocenaVal");
+    if (data.ocena && data.ocena.value !== null && data.ocena.value !== undefined) {
+      ocenaEl.textContent = data.ocena.value.toLocaleString("sr-Latn-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     } else {
-      bonusVal.textContent = "—";
-      if (data.bonus_note) {
-        var n = document.createElement("div");
-        n.className = "note";
-        n.textContent = data.bonus_note;
-        bonusVal.appendChild(document.createElement("br"));
-        bonusVal.appendChild(n);
-      }
+      ocenaEl.textContent = (data.ocena && data.ocena.note) || "—";
     }
+    document.getElementById("ocenaSub").textContent = data.ocena && data.ocena.since
+      ? "Ocjene od " + data.ocena.since : "Poseban period ocenjivanja";
 
-    var qualityVal = document.getElementById("qualityVal");
-    qualityVal.innerHTML = "";
-    if (data.quality !== null && data.quality !== undefined) {
-      qualityVal.textContent = data.quality.toFixed(2);
+    var stdBody = document.getElementById("standardRows");
+    stdBody.innerHTML = "";
+    (data.standard || []).forEach(function (row) {
+      var kd = pctDisplay(row.kpi);
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + row.label + "</td>" +
+        '<td class="num">' + timeDisplay(row.actual_s) + "</td>" +
+        '<td class="num">' + timeDisplay(row.norm_s) + "</td>" +
+        '<td class="num kpi ' + kd.cls + '">' + kd.text + "</td>";
+      stdBody.appendChild(tr);
+    });
+
+    var otherBox = document.getElementById("otherRows");
+    otherBox.innerHTML = "";
+    (data.other || []).forEach(function (row) {
+      var d = pctDisplay(row.kpi);
+      var div = document.createElement("div");
+      div.className = "pct-row";
+      div.innerHTML = '<span>' + row.label + '</span><span class="v ' + d.cls + '">' + d.text + "</span>";
+      otherBox.appendChild(div);
+    });
+
+    document.getElementById("daysVal").textContent =
+      (data.working_days && data.working_days.value !== null) ? data.working_days.value : ((data.working_days && data.working_days.note) || "—");
+    setStat("allowedVal", data.allowed_minus, { forceClass: "neg" });
+    setStat("potentialVal", data.potential_bonus, { money: true });
+
+    var achievedField = data.achieved_bonus;
+    var achievedBlocked = achievedField && achievedField.value === 0 && data.potential_bonus && data.potential_bonus.value > 0;
+    setStat("achievedVal", achievedField, { money: true, forceClass: achievedBlocked ? "neg" : "" });
+
+    var bar = document.getElementById("blockedBar");
+    if (data.blocked_reason) {
+      document.getElementById("blockedText").textContent = data.blocked_reason;
+      bar.hidden = false;
     } else {
-      qualityVal.textContent = "—";
-      if (data.quality_note) {
-        var n2 = document.createElement("div");
-        n2.className = "note";
-        n2.textContent = data.quality_note;
-        qualityVal.appendChild(document.createElement("br"));
-        qualityVal.appendChild(n2);
-      }
+      bar.hidden = true;
     }
 
-    var catBox = document.getElementById("categoryRows");
-    catBox.innerHTML = "";
-    if (data.categories) {
-      Object.keys(data.categories).forEach(function (label) {
-        var d = pctDisplay(data.categories[label]);
-        var row = document.createElement("div");
-        row.className = "pct-row";
-        row.innerHTML =
-          '<span class="k">' + label + '</span><span class="v' + (d.cls ? " " + d.cls : "") + '">' + d.text + '</span>';
-        catBox.appendChild(row);
-      });
-    }
+    loginView.hidden = true;
+    resultView.hidden = false;
+    logoutBtn.hidden = false;
+  }
 
-    setPctRow("errorsVal", data.errors);
-    setPctRow("timeVal", data.time);
-    setPctRow("quantityVal", data.quantity);
-    setPctRow("totalVal", data.total);
-    setPctRow("percentVal", data.percent);
-
-    loginView.style.display = "none";
-    resultView.style.display = "block";
+  function resetToLogin() {
+    resultView.hidden = true;
+    loginView.hidden = false;
+    logoutBtn.hidden = true;
+    idInput.value = "";
+    pinInput.value = "";
+    clearError();
   }
 
   submitBtn.addEventListener("click", tryLogin);
   pinInput.addEventListener("keydown", function (e) { if (e.key === "Enter") tryLogin(); });
+  document.getElementById("backBtn").addEventListener("click", resetToLogin);
+  logoutBtn.addEventListener("click", resetToLogin);
 
-  document.getElementById("backBtn").addEventListener("click", function () {
-    resultView.style.display = "none";
-    loginView.style.display = "block";
-    idInput.value = "";
-    pinInput.value = "";
-    clearError();
-  });
+  var howModal = document.getElementById("howModal");
+  document.getElementById("howBtn").addEventListener("click", function () { howModal.hidden = false; });
+  document.getElementById("closeModalBtn").addEventListener("click", function () { howModal.hidden = true; });
+  howModal.addEventListener("click", function (e) { if (e.target === howModal) howModal.hidden = true; });
 })();
 </script>
 </body>
